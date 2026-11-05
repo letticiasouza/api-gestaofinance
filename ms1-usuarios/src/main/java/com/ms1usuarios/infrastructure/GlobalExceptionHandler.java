@@ -1,5 +1,6 @@
 package com.ms1usuarios.infrastructure;
 
+import com.ms1usuarios.domain.exception.LoginInvalidoException;
 import com.ms1usuarios.domain.exception.EmailJaCadastradoException;
 import com.ms1usuarios.domain.exception.UsuarioNaoEncontradoException;
 import org.springframework.http.HttpStatus;
@@ -32,6 +33,18 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .body(Map.of(
                         "status", 404,
+                        "mensagem", ex.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(LoginInvalidoException.class)
+    public ResponseEntity<Map<String, Object>> tratarLoginInvalido(
+            LoginInvalidoException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of(
+                        "status", 401,
                         "mensagem", ex.getMessage()
                 ));
     }

@@ -2,6 +2,8 @@ package com.ms1usuarios.adapters.input.controller;
 
 import com.ms1usuarios.dto.CreateUsuarioRequest;
 import com.ms1usuarios.dto.ImportacaoUsuarioResponse;
+import com.ms1usuarios.dto.LoginRequest;
+import com.ms1usuarios.dto.LoginResponse;
 import com.ms1usuarios.dto.UpdateUsuarioRequest;
 import com.ms1usuarios.dto.UsuarioResponse;
 import com.ms1usuarios.ports.input.CreateUsuarioUseCase;
@@ -9,6 +11,7 @@ import com.ms1usuarios.ports.input.DeleteUsuarioUseCase;
 import com.ms1usuarios.ports.input.FindUsuarioUseCase;
 import com.ms1usuarios.ports.input.ImportUsuariosCsvUseCase;
 import com.ms1usuarios.ports.input.ListUsuariosUseCase;
+import com.ms1usuarios.ports.input.LoginUseCase;
 import com.ms1usuarios.ports.input.UpdateUsuarioUseCase;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -31,6 +34,7 @@ public class UsuarioController {
     private final UpdateUsuarioUseCase updateUsuarioUseCase;
     private final DeleteUsuarioUseCase deleteUsuarioUseCase;
     private final ImportUsuariosCsvUseCase importUsuariosCsvUseCase;
+    private final LoginUseCase loginUseCase;
 
     public UsuarioController(
             CreateUsuarioUseCase createUsuarioUseCase,
@@ -38,7 +42,8 @@ public class UsuarioController {
             ListUsuariosUseCase listUsuariosUseCase,
             UpdateUsuarioUseCase updateUsuarioUseCase,
             DeleteUsuarioUseCase deleteUsuarioUseCase,
-            ImportUsuariosCsvUseCase importUsuariosCsvUseCase) {
+            ImportUsuariosCsvUseCase importUsuariosCsvUseCase,
+            LoginUseCase loginUseCase) {
 
         this.createUsuarioUseCase = createUsuarioUseCase;
         this.findUsuarioUseCase = findUsuarioUseCase;
@@ -46,6 +51,7 @@ public class UsuarioController {
         this.updateUsuarioUseCase = updateUsuarioUseCase;
         this.deleteUsuarioUseCase = deleteUsuarioUseCase;
         this.importUsuariosCsvUseCase = importUsuariosCsvUseCase;
+        this.loginUseCase = loginUseCase;
     }
 
     @PostMapping
@@ -54,6 +60,13 @@ public class UsuarioController {
             @Valid @RequestBody CreateUsuarioRequest request) {
 
         return createUsuarioUseCase.criar(request);
+    }
+
+    @PostMapping("/login")
+    public LoginResponse login(
+            @Valid @RequestBody LoginRequest request) {
+
+        return loginUseCase.login(request);
     }
 
     @GetMapping("/{id}")
