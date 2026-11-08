@@ -73,6 +73,25 @@ services:
     depends_on:
       postgres-users:
         condition: service_healthy
+
+  ms2-transacoes:
+    build:
+      context: ./ms2-transacoes
+      dockerfile: Dockerfile
+    container_name: ms2-transacoes
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      MS2_SERVER_PORT: ${MS2_SERVER_PORT}
+      TRANSACTION_DB_NAME: ${TRANSACTION_DB_NAME}
+      TRANSACTION_DB_USER: ${TRANSACTION_DB_USER}
+      TRANSACTION_DB_PASSWORD: ${TRANSACTION_DB_PASSWORD}
+      MS2_SECURITY_USER: ${MS2_SECURITY_USER}
+      MS2_SECURITY_PASSWORD: ${MS2_SECURITY_PASSWORD}
+    depends_on:
+      postgres-transactions:
+        condition: service_healthy
  
 volumes:
   postgres-users-data:
