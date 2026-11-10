@@ -8,6 +8,9 @@ import com.ms1usuarios.dto.UsuarioResponse;
 import com.ms1usuarios.ports.input.UpdateUsuarioUseCase;
 import com.ms1usuarios.ports.output.UsuarioRepositoryPort;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import com.ms1usuarios.domain.exception.AcessoNegadoException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -41,6 +44,20 @@ public class UpdateUsuarioService
                         .buscarPorId(id)
                         .orElseThrow(() ->
                                 new UsuarioNaoEncontradoException(id));
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        String emailAutenticado =
+                authentication.getName();
+
+        if (!usuario.getEmail()
+                .equalsIgnoreCase(emailAutenticado)) {
+
+            throw new AcessoNegadoException();
+        }
 
         String email =
                 request.getEmail()

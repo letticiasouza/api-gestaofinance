@@ -9,10 +9,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import java.io.StringReader;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,124 +54,138 @@ public class ImportUsuariosCsvService
         List<ImportacaoUsuarioResponse.ErroImportacao>
                 erros = new ArrayList<>();
 
-        try (
+        try {
 
-                InputStreamReader reader =
-                        new InputStreamReader(
-                                arquivo.getInputStream(),
-                                StandardCharsets.UTF_8
-                        );
+            String conteudo =
+                    new String(
+                            arquivo.getBytes(),
+                            StandardCharsets.UTF_8
+                    );
 
-                CSVParser parser =
-                        CSVFormat.DEFAULT
-                                .builder()
-                                .setHeader()
-                                .setSkipHeaderRecord(false)
-                                .build()
-                                .parse(reader);
+            char delimitador =
+                    conteudo.contains(";")
+                            ? ';'
+                            : ',';
 
-        ) {
+            try (
 
-            List<String> headers =
-                    parser.getHeaderNames();
+                    CSVParser parser =
+                            CSVFormat.DEFAULT
+                                    .builder()
+                                    .setDelimiter(delimitador)
+                                    .setHeader()
+                                    .setSkipHeaderRecord(false)
+                                    .build()
+                                    .parse(
+                                            new StringReader(
+                                                    conteudo
+                                            )
+                                    )
 
-            String primeiroHeader =
-                    headers.get(0)
-                            .replace("\uFEFF", "");
+            ) {
 
-            if (headers.size() != 3
-                    || !primeiroHeader
-                    .equalsIgnoreCase("nome")
-                    || !headers.get(1)
-                    .equalsIgnoreCase("email")
-                    || !headers.get(2)
-                    .equalsIgnoreCase("senha")) {
+                List<String> headers =
+                        parser.getHeaderNames();
 
-                throw new CabecalhoCsvInvalidoException();
-            }
+                String primeiroHeader =
+                        headers.get(0)
+                                .replace("\uFEFF", "");
 
-            for (CSVRecord record : parser) {
+                if (headers.size() != 3
+                        || !primeiroHeader
+                        .equalsIgnoreCase("nome")
+                        || !headers.get(1)
+                        .equalsIgnoreCase("email")
+                        || !headers.get(2)
+                        .equalsIgnoreCase("senha")) {
 
-                int numeroLinha =
-                        (int) record.getRecordNumber() + 1;
+                    throw new CabecalhoCsvInvalidoException();
+                }
 
-                try {
+                for (CSVRecord record : parser) {
 
-                    String nome =
-                            record.get("nome").trim();
+                    int numeroLinha =
+                            (int) record.getRecordNumber() + 1;
 
-                    String email =
-                            record.get("email")
-                                    .trim()
-                                    .toLowerCase();
+                    try {
 
-                    String senha =
-                            record.get("senha").trim();
+                        String nome =
+                                record.get("nome").trim();
 
-                    if (!EMAIL_PATTERN
-                            .matcher(email)
-                            .matches()) {
+                        String email =
+                                record.get("email")
+                                        .trim()
+                                        .toLowerCase();
 
-                        erros.add(
-                                new ImportacaoUsuarioResponse
-                                        .ErroImportacao(
-                                        numeroLinha,
-                                        "Email inválido"
-                                )
-                        );
+                        String senha =
+                                record.get("senha").trim();
 
-                        usuariosComErro++;
+                        if (!EMAIL_PATTERN
+                                .matcher(email)
+                                .matches()) {
 
-                        continue;
-                    }
-
-                    boolean emailExiste =
-                            usuarioRepositoryPort
-                                    .buscarPorEmail(email)
-                                    .isPresent();
-
-                    if (emailExiste) {
-
-                        erros.add(
-                                new ImportacaoUsuarioResponse
-                                        .ErroImportacao(
-                                        numeroLinha,
-                                        "Email já cadastrado"
-                                )
-                        );
-
-                        usuariosComErro++;
-
-                        continue;
-                    }
-
-                    Usuario usuario =
-                            new Usuario(
-                                    UUID.randomUUID(),
-                                    nome,
-                                    email,
-                                    passwordEncoder.encode(
-                                            senha
+                            erros.add(
+                                    new ImportacaoUsuarioResponse
+                                            .ErroImportacao(
+                                            numeroLinha,
+                                            "Email inválido"
                                     )
                             );
 
-                    usuarioRepositoryPort
-                            .salvar(usuario);
+                            usuariosComErro++;
 
-                    usuariosImportados++;
+                            continue;
+                        }
 
-                } catch (Exception e) {
+                        boolean emailExiste =
+                                usuarioRepositoryPort
+                                        .buscarPorEmail(email)
+                                        .isPresent();
 
-                    erros.add(
-                            new ImportacaoUsuarioResponse
-                                    .ErroImportacao(
-                                    numeroLinha,
-                                    e.getMessage()
-                            )
-                    );
+                        if (emailExiste) {
 
-                    usuariosComErro++;
+                            erros.add(
+                                    new ImportacaoUsuarioResponse
+                                            .ErroImportacao(
+                                            numeroLinha,
+                                            "Email já cadastrado"
+                                    )
+                            );
+
+                            usuariosComErro++;
+
+                            continue;
+                        }
+
+                        Usuario usuario =
+                                new Usuario(
+                                        UUID.randomUUID(),
+                                        nome,
+                                        email,
+                                        passwordEncoder.encode(
+                                                senha
+                                        )
+                                );
+
+                        usuarioRepositoryPort
+                                .salvar(usuario);
+
+                        usuariosImportados++;
+
+                    } catch (Exception e) {
+
+                        erros.add(
+                                new ImportacaoUsuarioResponse
+                                        .ErroImportacao(
+                                        numeroLinha,
+                                        e.getMessage()
+                                )
+                        );
+
+                        usuariosComErro++;
+                    }
                 }
+
             }
 
         } catch (CabecalhoCsvInvalidoException e) {

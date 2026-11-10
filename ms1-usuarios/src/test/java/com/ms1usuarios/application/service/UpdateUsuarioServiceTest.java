@@ -11,6 +11,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -59,6 +61,14 @@ class UpdateUsuarioServiceTest {
 
         when(usuarioRepositoryPort.salvar(any(Usuario.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
+
+        SecurityContextHolder.getContext()
+                .setAuthentication(
+                        new UsernamePasswordAuthenticationToken(
+                                "antigo@email.com",
+                                null
+                        )
+                );
 
         UsuarioResponse response =
                 updateUsuarioService.atualizar(id, request);
