@@ -1,12 +1,16 @@
 server:
   port: ${MS1_SERVER_PORT:8080}
 
+springdoc:
+  swagger-ui:
+    operations-sorter: method
+
 spring:
   application:
     name: ms1-usuarios
 
   datasource:
-    url: jdbc:postgresql://postgres-users:5432/${USER_DB_NAME}
+    url: jdbc:postgresql://${USER_DB_HOST:postgres-users}:5432/${USER_DB_NAME}
     username: ${USER_DB_USER}
     password: ${USER_DB_PASSWORD}
 

@@ -8,6 +8,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -38,6 +40,14 @@ class DeleteUsuarioServiceTest {
 
         when(usuarioRepositoryPort.buscarPorId(id))
                 .thenReturn(Optional.of(usuario));
+
+        SecurityContextHolder.getContext()
+                .setAuthentication(
+                        new UsernamePasswordAuthenticationToken(
+                                "vitoria@email.com",
+                                null
+                        )
+                );
 
         deleteUsuarioService.deletar(id);
 

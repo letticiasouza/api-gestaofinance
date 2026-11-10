@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -22,6 +23,9 @@ class LoginServiceTest {
 
     @Mock
     private UsuarioRepositoryPort usuarioRepositoryPort;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private LoginService loginService;
@@ -37,12 +41,17 @@ class LoginServiceTest {
                 UUID.randomUUID(),
                 "Vitoria",
                 "vitoria@email.com",
-                "123456"
+                "senhaHash"
         );
 
         when(usuarioRepositoryPort.buscarPorEmail(
                 request.getEmail()))
                 .thenReturn(Optional.of(usuario));
+
+        when(passwordEncoder.matches(
+                request.getSenha(),
+                usuario.getSenha()))
+                .thenReturn(true);
 
         LoginResponse response =
                 loginService.login(request);
@@ -90,12 +99,17 @@ class LoginServiceTest {
                 UUID.randomUUID(),
                 "Vitoria",
                 "vitoria@email.com",
-                "123456"
+                "senhaHash"
         );
 
         when(usuarioRepositoryPort.buscarPorEmail(
                 request.getEmail()))
                 .thenReturn(Optional.of(usuario));
+
+        when(passwordEncoder.matches(
+                request.getSenha(),
+                usuario.getSenha()))
+                .thenReturn(false);
 
         assertThrows(
                 LoginInvalidoException.class,

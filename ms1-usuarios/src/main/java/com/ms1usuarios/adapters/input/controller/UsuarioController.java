@@ -13,8 +13,10 @@ import com.ms1usuarios.ports.input.ImportUsuariosCsvUseCase;
 import com.ms1usuarios.ports.input.ListUsuariosUseCase;
 import com.ms1usuarios.ports.input.LoginUseCase;
 import com.ms1usuarios.ports.input.UpdateUsuarioUseCase;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -24,6 +26,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.UUID;
 
+@Tag(
+        name = "Usuários",
+        description = "Operações de gerenciamento de usuários"
+)
 @RestController
 @RequestMapping("/users")
 public class UsuarioController {
@@ -54,6 +60,9 @@ public class UsuarioController {
         this.loginUseCase = loginUseCase;
     }
 
+    @Operation(
+            summary = "Cria um novo usuário"
+    )
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UsuarioResponse criar(
@@ -62,6 +71,9 @@ public class UsuarioController {
         return createUsuarioUseCase.criar(request);
     }
 
+    @Operation(
+            summary = "Autentica um usuário"
+    )
     @PostMapping("/login")
     public LoginResponse login(
             @Valid @RequestBody LoginRequest request) {
@@ -69,6 +81,39 @@ public class UsuarioController {
         return loginUseCase.login(request);
     }
 
+    @Operation(
+            summary = "Importa usuários a partir de um arquivo CSV"
+    )
+    @PostMapping(
+            value = "/import",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ImportacaoUsuarioResponse importarCsv(
+
+            @Parameter(
+                    description = "Arquivo CSV",
+                    schema = @Schema(
+                            type = "string",
+                            format = "binary"
+                    )
+            )
+            @RequestPart("arquivo") MultipartFile arquivo) {
+
+        return importUsuariosCsvUseCase.importar(arquivo);
+    }
+
+    @Operation(
+            summary = "Lista todos os usuários"
+    )
+    @GetMapping
+    public List<UsuarioResponse> listarTodos() {
+
+        return listUsuariosUseCase.listarTodos();
+    }
+
+    @Operation(
+            summary = "Busca um usuário por identificador"
+    )
     @GetMapping("/{id}")
     public UsuarioResponse buscarPorId(
             @PathVariable UUID id) {
@@ -76,12 +121,9 @@ public class UsuarioController {
         return findUsuarioUseCase.buscarPorId(id);
     }
 
-    @GetMapping
-    public List<UsuarioResponse> listarTodos() {
-
-        return listUsuariosUseCase.listarTodos();
-    }
-
+    @Operation(
+            summary = "Atualiza os dados do usuário autenticado"
+    )
     @PutMapping("/{id}")
     public UsuarioResponse atualizar(
             @PathVariable UUID id,
@@ -90,26 +132,14 @@ public class UsuarioController {
         return updateUsuarioUseCase.atualizar(id, request);
     }
 
+    @Operation(
+            summary = "Remove um usuário"
+    )
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletar(
             @PathVariable UUID id) {
 
         deleteUsuarioUseCase.deletar(id);
-    }
-
-    @PostMapping(
-            value = "/import",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ImportacaoUsuarioResponse importarCsv(
-
-            @Parameter(
-                    description = "Arquivo CSV",
-                    schema = @Schema(
-                            type = "string",
-                            format = "binary"))
-            @RequestPart("arquivo") MultipartFile arquivo) {
-
-        return importUsuariosCsvUseCase.importar(arquivo);
     }
 }
