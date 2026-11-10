@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
@@ -21,6 +22,9 @@ class ImportUsuariosCsvServiceTest {
 
     @Mock
     private UsuarioRepositoryPort usuarioRepositoryPort;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private ImportUsuariosCsvService importUsuariosCsvService;
@@ -45,14 +49,21 @@ class ImportUsuariosCsvServiceTest {
                 "vitoria@email.com"))
                 .thenReturn(Optional.empty());
 
+        when(passwordEncoder.encode("123456"))
+                .thenReturn("senhaHash");
+
         ImportacaoUsuarioResponse response =
                 importUsuariosCsvService.importar(arquivo);
 
-        assertEquals(1,
-                response.getUsuariosImportados());
+        assertEquals(
+                1,
+                response.getUsuariosImportados()
+        );
 
-        assertEquals(0,
-                response.getErros());
+        assertEquals(
+                0,
+                response.getErros().size()
+        );
 
         verify(usuarioRepositoryPort)
                 .salvar(any(Usuario.class));
@@ -89,10 +100,14 @@ class ImportUsuariosCsvServiceTest {
         ImportacaoUsuarioResponse response =
                 importUsuariosCsvService.importar(arquivo);
 
-        assertEquals(0,
-                response.getUsuariosImportados());
+        assertEquals(
+                0,
+                response.getUsuariosImportados()
+        );
 
-        assertEquals(1,
-                response.getErros());
+        assertEquals(
+                1,
+                response.getErros().size()
+        );
     }
 }
