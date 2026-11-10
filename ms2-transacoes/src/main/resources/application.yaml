@@ -20,3 +20,9 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+mockapi:
+  base-url: https://6ae910cc1a7b15aaa50f9c4c.mockapi.io/api/v1
+
+brasilapi:
+  base-url: https://brasilapi.com.br

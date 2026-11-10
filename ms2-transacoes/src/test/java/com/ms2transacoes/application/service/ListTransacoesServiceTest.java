@@ -5,6 +5,7 @@ import com.ms2transacoes.domain.model.StatusTransacao;
 import com.ms2transacoes.domain.model.TipoTransacao;
 import com.ms2transacoes.domain.model.Transacao;
 import com.ms2transacoes.dto.TransacaoResponse;
+import com.ms2transacoes.ports.output.CambioClientPort;
 import com.ms2transacoes.ports.output.TransacaoRepositoryPort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -26,11 +28,37 @@ class ListTransacoesServiceTest {
     @Mock
     private TransacaoRepositoryPort transacaoRepositoryPort;
 
+    @Mock
+    private CambioClientPort cambioClientPort;
+
     @InjectMocks
     private ListTransacoesService listTransacoesService;
 
+    private void mockCambio() {
+
+        when(cambioClientPort.buscarUsd())
+                .thenReturn(
+                        new CambioClientPort.Cotacao(
+                                "USD",
+                                new BigDecimal("5.50"),
+                                LocalDate.now()
+                        )
+                );
+
+        when(cambioClientPort.buscarEur())
+                .thenReturn(
+                        new CambioClientPort.Cotacao(
+                                "EUR",
+                                new BigDecimal("6.00"),
+                                LocalDate.now()
+                        )
+                );
+    }
+
     @Test
     void deveListarTransacoesPorUsuario() {
+
+        mockCambio();
 
         UUID usuarioId = UUID.randomUUID();
 
@@ -70,6 +98,8 @@ class ListTransacoesServiceTest {
     @Test
     void deveFiltrarPorTipo() {
 
+        mockCambio();
+
         UUID usuarioId = UUID.randomUUID();
 
         Transacao deposito = new Transacao(
@@ -100,10 +130,12 @@ class ListTransacoesServiceTest {
 
         when(transacaoRepositoryPort
                 .listarPorUsuario(usuarioId))
-                .thenReturn(List.of(
-                        deposito,
-                        compra
-                ));
+                .thenReturn(
+                        List.of(
+                                deposito,
+                                compra
+                        )
+                );
 
         List<TransacaoResponse> response =
                 listTransacoesService.listar(

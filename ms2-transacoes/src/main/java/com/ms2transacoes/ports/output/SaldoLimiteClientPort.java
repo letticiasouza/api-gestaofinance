@@ -1,13 +1,17 @@
 package com.ms2transacoes.ports.output;
 
+import com.ms2transacoes.dto.ContaMockApiResponse;
+
 import java.math.BigDecimal;
-import java.util.UUID;
 
 public interface SaldoLimiteClientPort {
 
-    BigDecimal consultarSaldo(UUID usuarioId);
+    ContaMockApiResponse buscarContaPorUsuario(
+            String usuarioId
+    );
 
-    BigDecimal consultarLimitePorTransacao(UUID usuarioId);
-
-    BigDecimal consultarLimiteDiario(UUID usuarioId);
+    void atualizarSaldo(
+            String usuarioId,
+            BigDecimal novoSaldo
+    );
 }

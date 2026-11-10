@@ -1,15 +1,18 @@
 package com.ms2transacoes.adapters.input.controller;
 
+import com.ms2transacoes.dto.SaldoResponse;
 import com.ms2transacoes.domain.model.TipoTransacao;
 import com.ms2transacoes.dto.CreateTransacaoRequest;
 import com.ms2transacoes.dto.TransacaoResponse;
 import com.ms2transacoes.ports.input.CreateTransacaoUseCase;
 import com.ms2transacoes.ports.input.FindTransacaoUseCase;
+import com.ms2transacoes.ports.input.GetSaldoUseCase;
 import com.ms2transacoes.ports.input.ListTransacoesUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -24,14 +27,25 @@ public class TransacaoController {
 
     private final ListTransacoesUseCase listTransacoesUseCase;
 
+    private final GetSaldoUseCase getSaldoUseCase;
+
     public TransacaoController(
             CreateTransacaoUseCase createTransacaoUseCase,
             FindTransacaoUseCase findTransacaoUseCase,
-            ListTransacoesUseCase listTransacoesUseCase) {
+            ListTransacoesUseCase listTransacoesUseCase,
+            GetSaldoUseCase getSaldoUseCase) {
 
-        this.createTransacaoUseCase = createTransacaoUseCase;
-        this.findTransacaoUseCase = findTransacaoUseCase;
-        this.listTransacoesUseCase = listTransacoesUseCase;
+        this.createTransacaoUseCase =
+                createTransacaoUseCase;
+
+        this.findTransacaoUseCase =
+                findTransacaoUseCase;
+
+        this.listTransacoesUseCase =
+                listTransacoesUseCase;
+
+        this.getSaldoUseCase =
+                getSaldoUseCase;
     }
 
     @PostMapping
@@ -68,6 +82,15 @@ public class TransacaoController {
                 dataInicio,
                 dataFim,
                 tipo
+        );
+    }
+
+    @GetMapping("/saldo")
+    public SaldoResponse consultarSaldo(
+            @RequestParam UUID usuarioId) {
+
+        return getSaldoUseCase.consultarSaldo(
+                usuarioId
         );
     }
 }

@@ -6,6 +6,7 @@ import com.ms2transacoes.domain.model.StatusTransacao;
 import com.ms2transacoes.domain.model.TipoTransacao;
 import com.ms2transacoes.domain.model.Transacao;
 import com.ms2transacoes.dto.TransacaoResponse;
+import com.ms2transacoes.ports.output.CambioClientPort;
 import com.ms2transacoes.ports.output.TransacaoRepositoryPort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,6 +28,9 @@ class FindTransacaoServiceTest {
 
     @Mock
     private TransacaoRepositoryPort transacaoRepositoryPort;
+
+    @Mock
+    private CambioClientPort cambioClientPort;
 
     @InjectMocks
     private FindTransacaoService findTransacaoService;
@@ -50,6 +55,24 @@ class FindTransacaoServiceTest {
 
         when(transacaoRepositoryPort.buscarPorId(id))
                 .thenReturn(Optional.of(transacao));
+
+        when(cambioClientPort.buscarUsd())
+                .thenReturn(
+                        new CambioClientPort.Cotacao(
+                                "USD",
+                                new BigDecimal("5.50"),
+                                LocalDate.now()
+                        )
+                );
+
+        when(cambioClientPort.buscarEur())
+                .thenReturn(
+                        new CambioClientPort.Cotacao(
+                                "EUR",
+                                new BigDecimal("6.00"),
+                                LocalDate.now()
+                        )
+                );
 
         TransacaoResponse response =
                 findTransacaoService.buscarPorId(id);

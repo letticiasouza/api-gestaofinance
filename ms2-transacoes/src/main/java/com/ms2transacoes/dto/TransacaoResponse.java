@@ -1,13 +1,16 @@
 package com.ms2transacoes.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.ms2transacoes.domain.model.CategoriaDespesa;
 import com.ms2transacoes.domain.model.StatusTransacao;
 import com.ms2transacoes.domain.model.TipoTransacao;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class TransacaoResponse {
 
     private UUID id;
@@ -29,6 +32,18 @@ public class TransacaoResponse {
     private UUID usuarioDestinoId;
 
     private String motivoRejeicao;
+
+    private BigDecimal valorUsd;
+
+    private BigDecimal valorEur;
+
+    private BigDecimal taxaUsd;
+
+    private BigDecimal taxaEur;
+
+    private LocalDate dataCotacao;
+
+    private String mensagemConversao;
 
     public TransacaoResponse() {
     }
@@ -135,5 +150,53 @@ public class TransacaoResponse {
 
     public void setMotivoRejeicao(String motivoRejeicao) {
         this.motivoRejeicao = motivoRejeicao;
+    }
+
+    public BigDecimal getValorUsd() {
+        return valorUsd;
+    }
+
+    public void setValorUsd(BigDecimal valorUsd) {
+        this.valorUsd = valorUsd;
+    }
+
+    public BigDecimal getValorEur() {
+        return valorEur;
+    }
+
+    public void setValorEur(BigDecimal valorEur) {
+        this.valorEur = valorEur;
+    }
+
+    public BigDecimal getTaxaUsd() {
+        return taxaUsd;
+    }
+
+    public void setTaxaUsd(BigDecimal taxaUsd) {
+        this.taxaUsd = taxaUsd;
+    }
+
+    public BigDecimal getTaxaEur() {
+        return taxaEur;
+    }
+
+    public void setTaxaEur(BigDecimal taxaEur) {
+        this.taxaEur = taxaEur;
+    }
+
+    public LocalDate getDataCotacao() {
+        return dataCotacao;
+    }
+
+    public void setDataCotacao(LocalDate dataCotacao) {
+        this.dataCotacao = dataCotacao;
+    }
+
+    public String getMensagemConversao() {
+        return mensagemConversao;
+    }
+
+    public void setMensagemConversao(String mensagemConversao) {
+        this.mensagemConversao = mensagemConversao;
     }
 }
