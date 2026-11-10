@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import java.util.HashMap;
 
 import java.util.Map;
 
@@ -60,6 +62,46 @@ public class GlobalExceptionHandler {
                 .body(Map.of(
                         "status", 400,
                         "mensagem", ex.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(
+            MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>>
+    tratarErroValidacao(
+            MethodArgumentNotValidException ex) {
+
+        Map<String, String> erros =
+                new HashMap<>();
+
+        ex.getBindingResult()
+                .getFieldErrors()
+                .forEach(erro ->
+                        erros.put(
+                                erro.getField(),
+                                erro.getDefaultMessage()
+                        )
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "status", 400,
+                        "erros", erros
+                ));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>>
+    tratarErroGenerico(
+            Exception ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of(
+                        "status", 500,
+                        "mensagem",
+                        "Erro interno da aplicação"
                 ));
     }
 }
