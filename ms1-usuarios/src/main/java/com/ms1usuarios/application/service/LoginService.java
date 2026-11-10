@@ -6,27 +6,49 @@ import com.ms1usuarios.dto.LoginRequest;
 import com.ms1usuarios.dto.LoginResponse;
 import com.ms1usuarios.ports.input.LoginUseCase;
 import com.ms1usuarios.ports.output.UsuarioRepositoryPort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
-public class LoginService implements LoginUseCase {
+public class LoginService
+        implements LoginUseCase {
 
     private final UsuarioRepositoryPort usuarioRepositoryPort;
 
-    public LoginService(
-            UsuarioRepositoryPort usuarioRepositoryPort) {
+    private final PasswordEncoder passwordEncoder;
 
-        this.usuarioRepositoryPort = usuarioRepositoryPort;
+    public LoginService(
+            UsuarioRepositoryPort usuarioRepositoryPort,
+            PasswordEncoder passwordEncoder) {
+
+        this.usuarioRepositoryPort =
+                usuarioRepositoryPort;
+
+        this.passwordEncoder =
+                passwordEncoder;
     }
 
     @Override
-    public LoginResponse login(LoginRequest request) {
+    public LoginResponse login(
+            LoginRequest request) {
 
-        Usuario usuario = usuarioRepositoryPort
-                .buscarPorEmail(request.getEmail())
-                .orElseThrow(LoginInvalidoException::new);
+        String email =
+                request.getEmail()
+                        .trim()
+                        .toLowerCase();
 
-        if (!usuario.getSenha().equals(request.getSenha())) {
+        Usuario usuario =
+                usuarioRepositoryPort
+                        .buscarPorEmail(email)
+                        .orElseThrow(
+                                LoginInvalidoException::new
+                        );
+
+        if (!passwordEncoder.matches(
+                request.getSenha(),
+                usuario.getSenha()
+        )) {
+
             throw new LoginInvalidoException();
         }
 

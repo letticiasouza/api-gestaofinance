@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -23,6 +24,9 @@ class CreateUsuarioServiceTest {
 
     @Mock
     private UsuarioRepositoryPort usuarioRepositoryPort;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private CreateUsuarioService createUsuarioService;
@@ -41,12 +45,15 @@ class CreateUsuarioServiceTest {
                 request.getEmail()))
                 .thenReturn(Optional.empty());
 
+        when(passwordEncoder.encode("123456"))
+                .thenReturn("senhaHash");
+
         Usuario usuarioSalvo =
                 new Usuario(
                         UUID.randomUUID(),
                         request.getNome(),
                         request.getEmail(),
-                        request.getSenha()
+                        "senhaHash"
                 );
 
         when(usuarioRepositoryPort.salvar(any(Usuario.class)))
