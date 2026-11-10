@@ -17,7 +17,8 @@ public class CustomUserDetailsService
     public CustomUserDetailsService(
             UsuarioRepositoryPort usuarioRepositoryPort) {
 
-        this.usuarioRepositoryPort = usuarioRepositoryPort;
+        this.usuarioRepositoryPort =
+                usuarioRepositoryPort;
     }
 
     @Override
@@ -25,15 +26,23 @@ public class CustomUserDetailsService
             String email)
             throws UsernameNotFoundException {
 
+        String emailNormalizado =
+                email.trim()
+                        .toLowerCase();
+
         Usuario usuario =
-                usuarioRepositoryPort.buscarPorEmail(email)
+                usuarioRepositoryPort
+                        .buscarPorEmail(
+                                emailNormalizado
+                        )
                         .orElseThrow(() ->
                                 new UsernameNotFoundException(
-                                        "Usuário não encontrado"));
+                                        "Usuário não encontrado"
+                                ));
 
         return User.builder()
                 .username(usuario.getEmail())
-                .password("{noop}" + usuario.getSenha())
+                .password(usuario.getSenha())
                 .build();
     }
 }

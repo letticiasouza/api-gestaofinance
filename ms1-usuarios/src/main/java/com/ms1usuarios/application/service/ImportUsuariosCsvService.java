@@ -5,6 +5,7 @@ import com.ms1usuarios.domain.model.Usuario;
 import com.ms1usuarios.dto.ImportacaoUsuarioResponse;
 import com.ms1usuarios.ports.input.ImportUsuariosCsvUseCase;
 import com.ms1usuarios.ports.output.UsuarioRepositoryPort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -24,16 +25,22 @@ public class ImportUsuariosCsvService
 
     private final UsuarioRepositoryPort usuarioRepositoryPort;
 
+    private final PasswordEncoder passwordEncoder;
+
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile(
                     "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
             );
 
     public ImportUsuariosCsvService(
-            UsuarioRepositoryPort usuarioRepositoryPort) {
+            UsuarioRepositoryPort usuarioRepositoryPort,
+            PasswordEncoder passwordEncoder) {
 
         this.usuarioRepositoryPort =
                 usuarioRepositoryPort;
+
+        this.passwordEncoder =
+                passwordEncoder;
     }
 
     @Override
@@ -139,7 +146,9 @@ public class ImportUsuariosCsvService
                                     UUID.randomUUID(),
                                     nome,
                                     email,
-                                    senha
+                                    passwordEncoder.encode(
+                                            senha
+                                    )
                             );
 
                     usuarioRepositoryPort

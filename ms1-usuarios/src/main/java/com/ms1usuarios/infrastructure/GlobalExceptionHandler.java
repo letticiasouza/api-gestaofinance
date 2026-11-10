@@ -19,9 +19,9 @@ public class GlobalExceptionHandler {
             EmailJaCadastradoException ex) {
 
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
+                .status(HttpStatus.CONFLICT)
                 .body(Map.of(
-                        "status", 400,
+                        "status", 409,
                         "mensagem", ex.getMessage()
                 ));
     }
