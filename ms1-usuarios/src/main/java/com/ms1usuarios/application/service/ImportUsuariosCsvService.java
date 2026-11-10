@@ -68,15 +68,19 @@ public class ImportUsuariosCsvService
                                 .setHeader()
                                 .setSkipHeaderRecord(false)
                                 .build()
-                                .parse(reader)
+                                .parse(reader);
 
         ) {
 
             List<String> headers =
                     parser.getHeaderNames();
 
+            String primeiroHeader =
+                    headers.get(0)
+                            .replace("\uFEFF", "");
+
             if (headers.size() != 3
-                    || !headers.get(0)
+                    || !primeiroHeader
                     .equalsIgnoreCase("nome")
                     || !headers.get(1)
                     .equalsIgnoreCase("email")
