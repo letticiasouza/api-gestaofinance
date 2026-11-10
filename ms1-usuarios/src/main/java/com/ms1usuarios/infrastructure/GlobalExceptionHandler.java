@@ -3,6 +3,7 @@ package com.ms1usuarios.infrastructure;
 import com.ms1usuarios.domain.exception.LoginInvalidoException;
 import com.ms1usuarios.domain.exception.EmailJaCadastradoException;
 import com.ms1usuarios.domain.exception.UsuarioNaoEncontradoException;
+import com.ms1usuarios.domain.exception.CabecalhoCsvInvalidoException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -45,6 +46,19 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of(
                         "status", 401,
+                        "mensagem", ex.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(CabecalhoCsvInvalidoException.class)
+    public ResponseEntity<Map<String, Object>>
+    tratarCabecalhoCsvInvalido(
+            CabecalhoCsvInvalidoException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "status", 400,
                         "mensagem", ex.getMessage()
                 ));
     }

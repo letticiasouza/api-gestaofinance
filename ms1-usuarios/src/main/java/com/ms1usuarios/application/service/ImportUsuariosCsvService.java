@@ -1,15 +1,22 @@
 package com.ms1usuarios.application.service;
 
+import com.ms1usuarios.domain.exception.CabecalhoCsvInvalidoException;
 import com.ms1usuarios.domain.model.Usuario;
 import com.ms1usuarios.dto.ImportacaoUsuarioResponse;
 import com.ms1usuarios.ports.input.ImportUsuariosCsvUseCase;
 import com.ms1usuarios.ports.output.UsuarioRepositoryPort;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Service
 public class ImportUsuariosCsvService
@@ -17,10 +24,16 @@ public class ImportUsuariosCsvService
 
     private final UsuarioRepositoryPort usuarioRepositoryPort;
 
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile(
+                    "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+            );
+
     public ImportUsuariosCsvService(
             UsuarioRepositoryPort usuarioRepositoryPort) {
 
-        this.usuarioRepositoryPort = usuarioRepositoryPort;
+        this.usuarioRepositoryPort =
+                usuarioRepositoryPort;
     }
 
     @Override
@@ -28,33 +41,78 @@ public class ImportUsuariosCsvService
             MultipartFile arquivo) {
 
         int usuariosImportados = 0;
-        int erros = 0;
+
+        int usuariosComErro = 0;
+
+        List<ImportacaoUsuarioResponse.ErroImportacao>
+                erros = new ArrayList<>();
 
         try (
-                BufferedReader reader =
-                        new BufferedReader(
-                                new InputStreamReader(
-                                        arquivo.getInputStream()))
+
+                InputStreamReader reader =
+                        new InputStreamReader(
+                                arquivo.getInputStream(),
+                                StandardCharsets.UTF_8
+                        );
+
+                CSVParser parser =
+                        CSVFormat.DEFAULT
+                                .builder()
+                                .setHeader()
+                                .setSkipHeaderRecord(false)
+                                .build()
+                                .parse(reader)
+
         ) {
 
-            String linha;
+            List<String> headers =
+                    parser.getHeaderNames();
 
-            boolean cabecalho = true;
+            if (headers.size() != 3
+                    || !headers.get(0)
+                    .equalsIgnoreCase("nome")
+                    || !headers.get(1)
+                    .equalsIgnoreCase("email")
+                    || !headers.get(2)
+                    .equalsIgnoreCase("senha")) {
 
-            while ((linha = reader.readLine()) != null) {
+                throw new CabecalhoCsvInvalidoException();
+            }
 
-                if (cabecalho) {
-                    cabecalho = false;
-                    continue;
-                }
+            for (CSVRecord record : parser) {
+
+                int numeroLinha =
+                        (int) record.getRecordNumber() + 1;
 
                 try {
 
-                    String[] campos = linha.split(",");
+                    String nome =
+                            record.get("nome").trim();
 
-                    String nome = campos[0].trim();
-                    String email = campos[1].trim();
-                    String senha = campos[2].trim();
+                    String email =
+                            record.get("email")
+                                    .trim()
+                                    .toLowerCase();
+
+                    String senha =
+                            record.get("senha").trim();
+
+                    if (!EMAIL_PATTERN
+                            .matcher(email)
+                            .matches()) {
+
+                        erros.add(
+                                new ImportacaoUsuarioResponse
+                                        .ErroImportacao(
+                                        numeroLinha,
+                                        "Email inválido"
+                                )
+                        );
+
+                        usuariosComErro++;
+
+                        continue;
+                    }
 
                     boolean emailExiste =
                             usuarioRepositoryPort
@@ -62,25 +120,50 @@ public class ImportUsuariosCsvService
                                     .isPresent();
 
                     if (emailExiste) {
-                        erros++;
+
+                        erros.add(
+                                new ImportacaoUsuarioResponse
+                                        .ErroImportacao(
+                                        numeroLinha,
+                                        "Email já cadastrado"
+                                )
+                        );
+
+                        usuariosComErro++;
+
                         continue;
                     }
 
-                    Usuario usuario = new Usuario(
-                            UUID.randomUUID(),
-                            nome,
-                            email,
-                            senha
-                    );
+                    Usuario usuario =
+                            new Usuario(
+                                    UUID.randomUUID(),
+                                    nome,
+                                    email,
+                                    senha
+                            );
 
-                    usuarioRepositoryPort.salvar(usuario);
+                    usuarioRepositoryPort
+                            .salvar(usuario);
 
                     usuariosImportados++;
 
                 } catch (Exception e) {
-                    erros++;
+
+                    erros.add(
+                            new ImportacaoUsuarioResponse
+                                    .ErroImportacao(
+                                    numeroLinha,
+                                    e.getMessage()
+                            )
+                    );
+
+                    usuariosComErro++;
                 }
             }
+
+        } catch (CabecalhoCsvInvalidoException e) {
+
+            throw e;
 
         } catch (Exception e) {
 
@@ -92,6 +175,7 @@ public class ImportUsuariosCsvService
 
         return new ImportacaoUsuarioResponse(
                 usuariosImportados,
+                usuariosComErro,
                 erros
         );
     }
