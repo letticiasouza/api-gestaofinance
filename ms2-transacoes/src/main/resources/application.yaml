@@ -13,6 +13,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+
     open-in-view: false
 
     show-sql: true
@@ -26,3 +27,6 @@ mockapi:
 
 brasilapi:
   base-url: https://brasilapi.com.br
+
+ms1:
+  base-url: http://ms1-usuarios:8080

@@ -1,18 +1,23 @@
 package com.ms2transacoes.adapters.input.controller;
 
-import com.ms2transacoes.dto.SaldoResponse;
 import com.ms2transacoes.domain.model.TipoTransacao;
 import com.ms2transacoes.dto.CreateTransacaoRequest;
+import com.ms2transacoes.dto.DespesasAgrupadasResponse;
+import com.ms2transacoes.dto.ModoAnalise;
+import com.ms2transacoes.dto.ResumoDespesasResponse;
+import com.ms2transacoes.dto.SaldoResponse;
 import com.ms2transacoes.dto.TransacaoResponse;
 import com.ms2transacoes.ports.input.CreateTransacaoUseCase;
 import com.ms2transacoes.ports.input.FindTransacaoUseCase;
 import com.ms2transacoes.ports.input.GetSaldoUseCase;
+import com.ms2transacoes.ports.input.ListDespesasAgrupadasUseCase;
 import com.ms2transacoes.ports.input.ListTransacoesUseCase;
+import com.ms2transacoes.ports.input.ResumoDespesasUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -29,11 +34,19 @@ public class TransacaoController {
 
     private final GetSaldoUseCase getSaldoUseCase;
 
+    private final ResumoDespesasUseCase resumoDespesasUseCase;
+
+    private final ListDespesasAgrupadasUseCase
+            listDespesasAgrupadasUseCase;
+
     public TransacaoController(
             CreateTransacaoUseCase createTransacaoUseCase,
             FindTransacaoUseCase findTransacaoUseCase,
             ListTransacoesUseCase listTransacoesUseCase,
-            GetSaldoUseCase getSaldoUseCase) {
+            GetSaldoUseCase getSaldoUseCase,
+            ResumoDespesasUseCase resumoDespesasUseCase,
+            ListDespesasAgrupadasUseCase
+                    listDespesasAgrupadasUseCase) {
 
         this.createTransacaoUseCase =
                 createTransacaoUseCase;
@@ -46,27 +59,36 @@ public class TransacaoController {
 
         this.getSaldoUseCase =
                 getSaldoUseCase;
+
+        this.resumoDespesasUseCase =
+                resumoDespesasUseCase;
+
+        this.listDespesasAgrupadasUseCase =
+                listDespesasAgrupadasUseCase;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TransacaoResponse criar(
-            @Valid @RequestBody CreateTransacaoRequest request) {
+            @Valid @RequestBody
+            CreateTransacaoRequest request) {
 
-        return createTransacaoUseCase.criar(request);
+        return createTransacaoUseCase.criar(
+                request
+        );
     }
 
     @GetMapping("/{id}")
     public TransacaoResponse buscarPorId(
             @PathVariable UUID id) {
 
-        return findTransacaoUseCase.buscarPorId(id);
+        return findTransacaoUseCase.buscarPorId(
+                id
+        );
     }
 
     @GetMapping
     public List<TransacaoResponse> listar(
-
-            @RequestParam UUID usuarioId,
 
             @RequestParam(required = false)
             LocalDateTime dataInicio,
@@ -78,7 +100,6 @@ public class TransacaoController {
             TipoTransacao tipo) {
 
         return listTransacoesUseCase.listar(
-                usuarioId,
                 dataInicio,
                 dataFim,
                 tipo
@@ -86,11 +107,41 @@ public class TransacaoController {
     }
 
     @GetMapping("/saldo")
-    public SaldoResponse consultarSaldo(
-            @RequestParam UUID usuarioId) {
+    public SaldoResponse consultarSaldo() {
 
-        return getSaldoUseCase.consultarSaldo(
-                usuarioId
+        return getSaldoUseCase.consultarSaldo();
+    }
+
+    @GetMapping("/despesas/resumo")
+    public ResumoDespesasResponse resumirDespesas(
+
+            @RequestParam(required = false)
+            LocalDate dataInicio,
+
+            @RequestParam(required = false)
+            LocalDate dataFim) {
+
+        return resumoDespesasUseCase.resumir(
+                dataInicio,
+                dataFim
+        );
+    }
+
+    @GetMapping("/despesas")
+    public DespesasAgrupadasResponse listarDespesas(
+
+            @RequestParam(required = false)
+            LocalDate dataInicio,
+
+            @RequestParam(required = false)
+            LocalDate dataFim,
+
+            @RequestParam ModoAnalise modo) {
+
+        return listDespesasAgrupadasUseCase.listar(
+                dataInicio,
+                dataFim,
+                modo
         );
     }
 }

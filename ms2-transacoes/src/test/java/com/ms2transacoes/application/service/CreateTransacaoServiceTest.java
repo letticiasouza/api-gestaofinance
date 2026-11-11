@@ -7,6 +7,7 @@ import com.ms2transacoes.domain.model.Transacao;
 import com.ms2transacoes.dto.ContaMockApiResponse;
 import com.ms2transacoes.dto.CreateTransacaoRequest;
 import com.ms2transacoes.dto.TransacaoResponse;
+import com.ms2transacoes.infrastructure.UsuarioAutenticadoProvider;
 import com.ms2transacoes.ports.output.SaldoLimiteClientPort;
 import com.ms2transacoes.ports.output.TransacaoRepositoryPort;
 import org.junit.jupiter.api.Test;
@@ -33,11 +34,19 @@ class CreateTransacaoServiceTest {
     @Mock
     private SaldoLimiteClientPort saldoLimiteClientPort;
 
+    @Mock
+    private UsuarioAutenticadoProvider usuarioAutenticadoProvider;
+
     @InjectMocks
     private CreateTransacaoService createTransacaoService;
 
     @Test
     void deveCriarTransacaoComSucesso() {
+
+        UUID usuarioId = UUID.randomUUID();
+
+        when(usuarioAutenticadoProvider.getId())
+                .thenReturn(usuarioId);
 
         CreateTransacaoRequest request =
                 new CreateTransacaoRequest();
@@ -54,9 +63,6 @@ class CreateTransacaoServiceTest {
         request.setCategoria(
                 CategoriaDespesa.OUTROS);
 
-        request.setUsuarioOrigemId(
-                UUID.randomUUID());
-
         request.setUsuarioDestinoId(
                 UUID.randomUUID());
 
@@ -66,8 +72,7 @@ class CreateTransacaoServiceTest {
         conta.setId("1");
 
         conta.setUsuarioId(
-                request.getUsuarioOrigemId()
-                        .toString()
+                usuarioId.toString()
         );
 
         conta.setSaldo(
@@ -82,9 +87,7 @@ class CreateTransacaoServiceTest {
         when(
                 saldoLimiteClientPort
                         .buscarContaPorUsuario(
-                                request
-                                        .getUsuarioOrigemId()
-                                        .toString()
+                                usuarioId.toString()
                         )
         ).thenReturn(conta);
 
@@ -97,7 +100,7 @@ class CreateTransacaoServiceTest {
                         LocalDateTime.now(),
                         "Deposito teste",
                         CategoriaDespesa.OUTROS,
-                        request.getUsuarioOrigemId(),
+                        usuarioId,
                         request.getUsuarioDestinoId(),
                         null
                 );
@@ -131,6 +134,11 @@ class CreateTransacaoServiceTest {
     @Test
     void deveRejeitarTransacaoQuandoSaldoForInsuficiente() {
 
+        UUID usuarioId = UUID.randomUUID();
+
+        when(usuarioAutenticadoProvider.getId())
+                .thenReturn(usuarioId);
+
         CreateTransacaoRequest request =
                 new CreateTransacaoRequest();
 
@@ -146,17 +154,13 @@ class CreateTransacaoServiceTest {
         request.setCategoria(
                 CategoriaDespesa.ALIMENTACAO);
 
-        request.setUsuarioOrigemId(
-                UUID.randomUUID());
-
         ContaMockApiResponse conta =
                 new ContaMockApiResponse();
 
         conta.setId("1");
 
         conta.setUsuarioId(
-                request.getUsuarioOrigemId()
-                        .toString()
+                usuarioId.toString()
         );
 
         conta.setSaldo(
@@ -171,9 +175,7 @@ class CreateTransacaoServiceTest {
         when(
                 saldoLimiteClientPort
                         .buscarContaPorUsuario(
-                                request
-                                        .getUsuarioOrigemId()
-                                        .toString()
+                                usuarioId.toString()
                         )
         ).thenReturn(conta);
 
@@ -186,7 +188,7 @@ class CreateTransacaoServiceTest {
                         LocalDateTime.now(),
                         "Compra teste",
                         CategoriaDespesa.ALIMENTACAO,
-                        request.getUsuarioOrigemId(),
+                        usuarioId,
                         null,
                         "Saldo insuficiente"
                 );

@@ -1,8 +1,10 @@
 package com.ms2transacoes.application.service;
 
+import com.ms2transacoes.domain.exception.AcessoNegadoException;
 import com.ms2transacoes.domain.exception.TransacaoNaoEncontradaException;
 import com.ms2transacoes.domain.model.Transacao;
 import com.ms2transacoes.dto.TransacaoResponse;
+import com.ms2transacoes.infrastructure.UsuarioAutenticadoProvider;
 import com.ms2transacoes.ports.input.FindTransacaoUseCase;
 import com.ms2transacoes.ports.output.CambioClientPort;
 import com.ms2transacoes.ports.output.TransacaoRepositoryPort;
@@ -19,15 +21,23 @@ public class FindTransacaoService
 
     private final CambioClientPort cambioClientPort;
 
+    private final UsuarioAutenticadoProvider
+            usuarioAutenticadoProvider;
+
     public FindTransacaoService(
             TransacaoRepositoryPort transacaoRepositoryPort,
-            CambioClientPort cambioClientPort) {
+            CambioClientPort cambioClientPort,
+            UsuarioAutenticadoProvider
+                    usuarioAutenticadoProvider) {
 
         this.transacaoRepositoryPort =
                 transacaoRepositoryPort;
 
         this.cambioClientPort =
                 cambioClientPort;
+
+        this.usuarioAutenticadoProvider =
+                usuarioAutenticadoProvider;
     }
 
     @Override
@@ -39,6 +49,16 @@ public class FindTransacaoService
                         .buscarPorId(id)
                         .orElseThrow(() ->
                                 new TransacaoNaoEncontradaException(id));
+
+        UUID usuarioLogadoId =
+                usuarioAutenticadoProvider
+                        .getId();
+
+        if (!transacao.getUsuarioOrigemId()
+                .equals(usuarioLogadoId)) {
+
+            throw new AcessoNegadoException();
+        }
 
         TransacaoResponse response =
                 new TransacaoResponse(

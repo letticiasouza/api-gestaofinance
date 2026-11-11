@@ -4,6 +4,7 @@ import com.ms2transacoes.domain.exception.ServicoSaldoIndisponivelException;
 import com.ms2transacoes.domain.exception.TransacaoNaoEncontradaException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import com.ms2transacoes.domain.exception.AcessoNegadoException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -36,6 +37,21 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(Map.of(
                         "status", 503,
+                        "mensagem", ex.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(
+            AcessoNegadoException.class
+    )
+    public ResponseEntity<Map<String, Object>>
+    tratarAcessoNegado(
+            AcessoNegadoException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(Map.of(
+                        "status", 403,
                         "mensagem", ex.getMessage()
                 ));
     }

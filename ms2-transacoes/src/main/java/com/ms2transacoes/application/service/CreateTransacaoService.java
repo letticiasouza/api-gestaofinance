@@ -7,6 +7,7 @@ import com.ms2transacoes.domain.model.Transacao;
 import com.ms2transacoes.dto.ContaMockApiResponse;
 import com.ms2transacoes.dto.CreateTransacaoRequest;
 import com.ms2transacoes.dto.TransacaoResponse;
+import com.ms2transacoes.infrastructure.UsuarioAutenticadoProvider;
 import com.ms2transacoes.ports.input.CreateTransacaoUseCase;
 import com.ms2transacoes.ports.output.SaldoLimiteClientPort;
 import com.ms2transacoes.ports.output.TransacaoRepositoryPort;
@@ -26,27 +27,37 @@ public class CreateTransacaoService
 
     private final SaldoLimiteClientPort saldoLimiteClientPort;
 
+    private final UsuarioAutenticadoProvider
+            usuarioAutenticadoProvider;
+
     public CreateTransacaoService(
             TransacaoRepositoryPort transacaoRepositoryPort,
-            SaldoLimiteClientPort saldoLimiteClientPort) {
+            SaldoLimiteClientPort saldoLimiteClientPort,
+            UsuarioAutenticadoProvider
+                    usuarioAutenticadoProvider) {
 
         this.transacaoRepositoryPort =
                 transacaoRepositoryPort;
 
         this.saldoLimiteClientPort =
                 saldoLimiteClientPort;
+
+        this.usuarioAutenticadoProvider =
+                usuarioAutenticadoProvider;
     }
 
     @Override
     public TransacaoResponse criar(
             CreateTransacaoRequest request) {
 
+        UUID usuarioId =
+                usuarioAutenticadoProvider
+                        .getId();
+
         ContaMockApiResponse conta =
                 saldoLimiteClientPort
                         .buscarContaPorUsuario(
-                                request
-                                        .getUsuarioOrigemId()
-                                        .toString()
+                                usuarioId.toString()
                         );
 
         if (conta == null) {
@@ -62,7 +73,8 @@ public class CreateTransacaoService
         if (request.getValor()
                 .compareTo(conta.getSaldo()) > 0) {
 
-            status = StatusTransacao.REJEITADA;
+            status =
+                    StatusTransacao.REJEITADA;
 
             motivoRejeicao =
                     "Saldo insuficiente";
@@ -74,7 +86,8 @@ public class CreateTransacaoService
                                 conta.getLimitePorTransacao()
                         ) > 0) {
 
-            status = StatusTransacao.REJEITADA;
+            status =
+                    StatusTransacao.REJEITADA;
 
             motivoRejeicao =
                     "Limite por transação excedido";
@@ -84,7 +97,7 @@ public class CreateTransacaoService
             List<Transacao> transacoesDoUsuario =
                     transacaoRepositoryPort
                             .listarPorUsuario(
-                                    request.getUsuarioOrigemId()
+                                    usuarioId
                             );
 
             LocalDate hoje =
@@ -114,7 +127,8 @@ public class CreateTransacaoService
                     conta.getLimiteDiario()
             ) > 0) {
 
-                status = StatusTransacao.REJEITADA;
+                status =
+                        StatusTransacao.REJEITADA;
 
                 motivoRejeicao =
                         "Limite diário excedido";
@@ -129,7 +143,7 @@ public class CreateTransacaoService
                 LocalDateTime.now(),
                 request.getDescricao(),
                 request.getCategoria(),
-                request.getUsuarioOrigemId(),
+                usuarioId,
                 request.getUsuarioDestinoId(),
                 motivoRejeicao
         );
@@ -151,8 +165,7 @@ public class CreateTransacaoService
 
                 saldoLimiteClientPort
                         .atualizarSaldo(
-                                request.getUsuarioOrigemId()
-                                        .toString(),
+                                usuarioId.toString(),
                                 novoSaldo
                         );
 
@@ -167,8 +180,7 @@ public class CreateTransacaoService
 
                 saldoLimiteClientPort
                         .atualizarSaldo(
-                                request.getUsuarioOrigemId()
-                                        .toString(),
+                                usuarioId.toString(),
                                 novoSaldoOrigem
                         );
 
@@ -205,8 +217,7 @@ public class CreateTransacaoService
 
                 saldoLimiteClientPort
                         .atualizarSaldo(
-                                request.getUsuarioOrigemId()
-                                        .toString(),
+                                usuarioId.toString(),
                                 novoSaldo
                         );
             }

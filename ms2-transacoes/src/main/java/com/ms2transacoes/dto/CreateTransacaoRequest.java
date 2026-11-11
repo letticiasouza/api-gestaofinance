@@ -14,15 +14,15 @@ public class CreateTransacaoRequest {
     private TipoTransacao tipo;
 
     @NotNull(message = "Valor é obrigatório")
-    @DecimalMin(value = "0.01", message = "Valor deve ser maior que zero")
+    @DecimalMin(
+            value = "0.01",
+            message = "Valor deve ser maior que zero"
+    )
     private BigDecimal valor;
 
     private String descricao;
 
     private CategoriaDespesa categoria;
-
-    @NotNull(message = "Usuário origem é obrigatório")
-    private UUID usuarioOrigemId;
 
     private UUID usuarioDestinoId;
 
@@ -33,7 +33,9 @@ public class CreateTransacaoRequest {
         return tipo;
     }
 
-    public void setTipo(TipoTransacao tipo) {
+    public void setTipo(
+            TipoTransacao tipo) {
+
         this.tipo = tipo;
     }
 
@@ -41,7 +43,9 @@ public class CreateTransacaoRequest {
         return valor;
     }
 
-    public void setValor(BigDecimal valor) {
+    public void setValor(
+            BigDecimal valor) {
+
         this.valor = valor;
     }
 
@@ -49,7 +53,9 @@ public class CreateTransacaoRequest {
         return descricao;
     }
 
-    public void setDescricao(String descricao) {
+    public void setDescricao(
+            String descricao) {
+
         this.descricao = descricao;
     }
 
@@ -57,23 +63,19 @@ public class CreateTransacaoRequest {
         return categoria;
     }
 
-    public void setCategoria(CategoriaDespesa categoria) {
+    public void setCategoria(
+            CategoriaDespesa categoria) {
+
         this.categoria = categoria;
-    }
-
-    public UUID getUsuarioOrigemId() {
-        return usuarioOrigemId;
-    }
-
-    public void setUsuarioOrigemId(UUID usuarioOrigemId) {
-        this.usuarioOrigemId = usuarioOrigemId;
     }
 
     public UUID getUsuarioDestinoId() {
         return usuarioDestinoId;
     }
 
-    public void setUsuarioDestinoId(UUID usuarioDestinoId) {
+    public void setUsuarioDestinoId(
+            UUID usuarioDestinoId) {
+
         this.usuarioDestinoId = usuarioDestinoId;
     }
 }
