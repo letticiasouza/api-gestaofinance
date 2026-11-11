@@ -6,6 +6,7 @@ import com.ms2transacoes.domain.model.StatusTransacao;
 import com.ms2transacoes.domain.model.TipoTransacao;
 import com.ms2transacoes.domain.model.Transacao;
 import com.ms2transacoes.dto.TransacaoResponse;
+import com.ms2transacoes.infrastructure.UsuarioAutenticadoProvider;
 import com.ms2transacoes.ports.output.CambioClientPort;
 import com.ms2transacoes.ports.output.TransacaoRepositoryPort;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,9 @@ class FindTransacaoServiceTest {
     @Mock
     private CambioClientPort cambioClientPort;
 
+    @Mock
+    private UsuarioAutenticadoProvider usuarioAutenticadoProvider;
+
     @InjectMocks
     private FindTransacaoService findTransacaoService;
 
@@ -39,6 +43,10 @@ class FindTransacaoServiceTest {
     void deveBuscarTransacaoPorIdComSucesso() {
 
         UUID id = UUID.randomUUID();
+        UUID usuarioId = UUID.randomUUID();
+
+        when(usuarioAutenticadoProvider.getId())
+                .thenReturn(usuarioId);
 
         Transacao transacao = new Transacao(
                 id,
@@ -48,7 +56,7 @@ class FindTransacaoServiceTest {
                 LocalDateTime.now(),
                 "Deposito teste",
                 CategoriaDespesa.OUTROS,
-                UUID.randomUUID(),
+                usuarioId,
                 null,
                 null
         );

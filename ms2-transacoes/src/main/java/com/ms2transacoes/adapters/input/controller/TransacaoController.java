@@ -8,6 +8,7 @@ import com.ms2transacoes.dto.ResumoDespesasResponse;
 import com.ms2transacoes.dto.SaldoResponse;
 import com.ms2transacoes.dto.TransacaoResponse;
 import com.ms2transacoes.ports.input.CreateTransacaoUseCase;
+import com.ms2transacoes.ports.input.ExportarRelatorioCsvUseCase;
 import com.ms2transacoes.ports.input.FindTransacaoUseCase;
 import com.ms2transacoes.ports.input.GetSaldoUseCase;
 import com.ms2transacoes.ports.input.ListDespesasAgrupadasUseCase;
@@ -15,6 +16,7 @@ import com.ms2transacoes.ports.input.ListTransacoesUseCase;
 import com.ms2transacoes.ports.input.ResumoDespesasUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -39,14 +41,17 @@ public class TransacaoController {
     private final ListDespesasAgrupadasUseCase
             listDespesasAgrupadasUseCase;
 
+    private final ExportarRelatorioCsvUseCase
+            exportarRelatorioCsvUseCase;
+
     public TransacaoController(
             CreateTransacaoUseCase createTransacaoUseCase,
             FindTransacaoUseCase findTransacaoUseCase,
             ListTransacoesUseCase listTransacoesUseCase,
             GetSaldoUseCase getSaldoUseCase,
             ResumoDespesasUseCase resumoDespesasUseCase,
-            ListDespesasAgrupadasUseCase
-                    listDespesasAgrupadasUseCase) {
+            ListDespesasAgrupadasUseCase listDespesasAgrupadasUseCase,
+            ExportarRelatorioCsvUseCase exportarRelatorioCsvUseCase) {
 
         this.createTransacaoUseCase =
                 createTransacaoUseCase;
@@ -65,6 +70,9 @@ public class TransacaoController {
 
         this.listDespesasAgrupadasUseCase =
                 listDespesasAgrupadasUseCase;
+
+        this.exportarRelatorioCsvUseCase =
+                exportarRelatorioCsvUseCase;
     }
 
     @PostMapping
@@ -142,6 +150,21 @@ public class TransacaoController {
                 dataInicio,
                 dataFim,
                 modo
+        );
+    }
+
+    @GetMapping("/relatorio")
+    public ResponseEntity<byte[]> exportarRelatorio(
+
+            @RequestParam(required = false)
+            LocalDate dataInicio,
+
+            @RequestParam(required = false)
+            LocalDate dataFim) {
+
+        return exportarRelatorioCsvUseCase.exportar(
+                dataInicio,
+                dataFim
         );
     }
 }
