@@ -5,14 +5,17 @@ import com.ms1usuarios.dto.ImportacaoUsuarioResponse;
 import com.ms1usuarios.dto.LoginRequest;
 import com.ms1usuarios.dto.LoginResponse;
 import com.ms1usuarios.dto.UpdateUsuarioRequest;
+import com.ms1usuarios.dto.UsuarioAuthResponse;
 import com.ms1usuarios.dto.UsuarioResponse;
 import com.ms1usuarios.ports.input.CreateUsuarioUseCase;
 import com.ms1usuarios.ports.input.DeleteUsuarioUseCase;
+import com.ms1usuarios.ports.input.FindUsuarioAuthUseCase;
 import com.ms1usuarios.ports.input.FindUsuarioUseCase;
 import com.ms1usuarios.ports.input.ImportUsuariosCsvUseCase;
 import com.ms1usuarios.ports.input.ListUsuariosUseCase;
 import com.ms1usuarios.ports.input.LoginUseCase;
 import com.ms1usuarios.ports.input.UpdateUsuarioUseCase;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -36,6 +39,7 @@ public class UsuarioController {
 
     private final CreateUsuarioUseCase createUsuarioUseCase;
     private final FindUsuarioUseCase findUsuarioUseCase;
+    private final FindUsuarioAuthUseCase findUsuarioAuthUseCase;
     private final ListUsuariosUseCase listUsuariosUseCase;
     private final UpdateUsuarioUseCase updateUsuarioUseCase;
     private final DeleteUsuarioUseCase deleteUsuarioUseCase;
@@ -45,6 +49,7 @@ public class UsuarioController {
     public UsuarioController(
             CreateUsuarioUseCase createUsuarioUseCase,
             FindUsuarioUseCase findUsuarioUseCase,
+            FindUsuarioAuthUseCase findUsuarioAuthUseCase,
             ListUsuariosUseCase listUsuariosUseCase,
             UpdateUsuarioUseCase updateUsuarioUseCase,
             DeleteUsuarioUseCase deleteUsuarioUseCase,
@@ -53,6 +58,7 @@ public class UsuarioController {
 
         this.createUsuarioUseCase = createUsuarioUseCase;
         this.findUsuarioUseCase = findUsuarioUseCase;
+        this.findUsuarioAuthUseCase = findUsuarioAuthUseCase;
         this.listUsuariosUseCase = listUsuariosUseCase;
         this.updateUsuarioUseCase = updateUsuarioUseCase;
         this.deleteUsuarioUseCase = deleteUsuarioUseCase;
@@ -71,14 +77,22 @@ public class UsuarioController {
         return createUsuarioUseCase.criar(request);
     }
 
-    @Operation(
-            summary = "Autentica um usuário"
-    )
+    @Hidden
     @PostMapping("/login")
     public LoginResponse login(
             @Valid @RequestBody LoginRequest request) {
 
         return loginUseCase.login(request);
+    }
+
+    @Hidden
+    @GetMapping("/auth/{email}")
+    public UsuarioAuthResponse buscarUsuarioAuth(
+            @PathVariable String email) {
+
+        return findUsuarioAuthUseCase.buscarPorEmail(
+                email
+        );
     }
 
     @Operation(

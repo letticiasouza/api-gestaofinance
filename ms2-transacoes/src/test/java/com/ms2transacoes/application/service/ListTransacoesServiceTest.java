@@ -1,0 +1,185 @@
+package com.ms2transacoes.application.service;
+
+import com.ms2transacoes.domain.model.CategoriaDespesa;
+import com.ms2transacoes.domain.model.StatusTransacao;
+import com.ms2transacoes.domain.model.TipoTransacao;
+import com.ms2transacoes.domain.model.Transacao;
+import com.ms2transacoes.dto.TransacaoResponse;
+import com.ms2transacoes.infrastructure.UsuarioAutenticadoProvider;
+import com.ms2transacoes.ports.output.CambioClientPort;
+import com.ms2transacoes.ports.output.TransacaoRepositoryPort;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class ListTransacoesServiceTest {
+
+    @Mock
+    private TransacaoRepositoryPort transacaoRepositoryPort;
+
+    @Mock
+    private CambioClientPort cambioClientPort;
+
+    @Mock
+    private UsuarioAutenticadoProvider usuarioAutenticadoProvider;
+
+    @InjectMocks
+    private ListTransacoesService listTransacoesService;
+
+    private void mockCambio() {
+
+        when(cambioClientPort.buscarUsd())
+                .thenReturn(
+                        new CambioClientPort.Cotacao(
+                                "USD",
+                                new BigDecimal("5.50"),
+                                LocalDate.now()
+                        )
+                );
+
+        when(cambioClientPort.buscarEur())
+                .thenReturn(
+                        new CambioClientPort.Cotacao(
+                                "EUR",
+                                new BigDecimal("6.00"),
+                                LocalDate.now()
+                        )
+                );
+    }
+
+    @Test
+    void deveListarTransacoesPorUsuario() {
+
+        mockCambio();
+
+        UUID usuarioId = UUID.randomUUID();
+
+        when(usuarioAutenticadoProvider.getId())
+                .thenReturn(usuarioId);
+
+        Transacao transacao = new Transacao(
+                UUID.randomUUID(),
+                TipoTransacao.DEPOSITO,
+                StatusTransacao.APROVADA,
+                new BigDecimal("100"),
+                LocalDateTime.now(),
+                "Deposito",
+                CategoriaDespesa.OUTROS,
+                usuarioId,
+                null,
+                null
+        );
+
+        when(transacaoRepositoryPort
+                .listarPorUsuario(usuarioId))
+                .thenReturn(List.of(transacao));
+
+        List<TransacaoResponse> response =
+                listTransacoesService.listar(
+                        null,
+                        null,
+                        null
+                );
+
+        assertEquals(1, response.size());
+
+        assertEquals(
+                TipoTransacao.DEPOSITO,
+                response.getFirst().getTipo()
+        );
+    }
+
+    @Test
+    void deveFiltrarPorTipo() {
+
+        mockCambio();
+
+        UUID usuarioId = UUID.randomUUID();
+
+        when(usuarioAutenticadoProvider.getId())
+                .thenReturn(usuarioId);
+
+        Transacao deposito = new Transacao(
+                UUID.randomUUID(),
+                TipoTransacao.DEPOSITO,
+                StatusTransacao.APROVADA,
+                new BigDecimal("100"),
+                LocalDateTime.now(),
+                "Deposito",
+                CategoriaDespesa.OUTROS,
+                usuarioId,
+                null,
+                null
+        );
+
+        Transacao compra = new Transacao(
+                UUID.randomUUID(),
+                TipoTransacao.COMPRA,
+                StatusTransacao.APROVADA,
+                new BigDecimal("50"),
+                LocalDateTime.now(),
+                "Compra",
+                CategoriaDespesa.ALIMENTACAO,
+                usuarioId,
+                null,
+                null
+        );
+
+        when(transacaoRepositoryPort
+                .listarPorUsuario(usuarioId))
+                .thenReturn(
+                        List.of(
+                                deposito,
+                                compra
+                        )
+                );
+
+        List<TransacaoResponse> response =
+                listTransacoesService.listar(
+                        null,
+                        null,
+                        TipoTransacao.COMPRA
+                );
+
+        assertEquals(1, response.size());
+
+        assertEquals(
+                TipoTransacao.COMPRA,
+                response.getFirst().getTipo()
+        );
+    }
+
+    @Test
+    void deveRetornarListaVazia() {
+
+        UUID usuarioId = UUID.randomUUID();
+
+        when(usuarioAutenticadoProvider.getId())
+                .thenReturn(usuarioId);
+
+        when(transacaoRepositoryPort
+                .listarPorUsuario(usuarioId))
+                .thenReturn(List.of());
+
+        List<TransacaoResponse> response =
+                listTransacoesService.listar(
+                        null,
+                        null,
+                        null
+                );
+
+        assertTrue(response.isEmpty());
+    }
+}

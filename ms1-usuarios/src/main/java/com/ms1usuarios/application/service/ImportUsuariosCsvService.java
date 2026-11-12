@@ -5,14 +5,14 @@ import com.ms1usuarios.domain.model.Usuario;
 import com.ms1usuarios.dto.ImportacaoUsuarioResponse;
 import com.ms1usuarios.ports.input.ImportUsuariosCsvUseCase;
 import com.ms1usuarios.ports.output.UsuarioRepositoryPort;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import java.io.StringReader;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,6 +62,13 @@ public class ImportUsuariosCsvService
                             StandardCharsets.UTF_8
                     );
 
+            if (conteudo.isBlank()) {
+
+                throw new IllegalArgumentException(
+                        "Arquivo CSV vazio."
+                );
+            }
+
             char delimitador =
                     conteudo.contains(";")
                             ? ';'
@@ -86,6 +93,13 @@ public class ImportUsuariosCsvService
 
                 List<String> headers =
                         parser.getHeaderNames();
+
+                if (headers.isEmpty()) {
+
+                    throw new IllegalArgumentException(
+                            "Arquivo CSV vazio."
+                    );
+                }
 
                 String primeiroHeader =
                         headers.get(0)
@@ -189,6 +203,10 @@ public class ImportUsuariosCsvService
             }
 
         } catch (CabecalhoCsvInvalidoException e) {
+
+            throw e;
+
+        } catch (IllegalArgumentException e) {
 
             throw e;
 

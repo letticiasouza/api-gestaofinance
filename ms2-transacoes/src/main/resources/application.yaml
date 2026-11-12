@@ -1,0 +1,32 @@
+server:
+  port: ${MS2_SERVER_PORT:8081}
+
+spring:
+  application:
+    name: ms2-transacoes
+
+  datasource:
+    url: jdbc:postgresql://postgres-transactions:5432/${TRANSACTION_DB_NAME}
+    username: ${TRANSACTION_DB_USER}
+    password: ${TRANSACTION_DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+    open-in-view: false
+
+    show-sql: true
+
+    properties:
+      hibernate:
+        format_sql: true
+
+mockapi:
+  base-url: https://6ae910cc1a7b15aaa50f9c4c.mockapi.io/api/v1
+
+brasilapi:
+  base-url: https://brasilapi.com.br
+
+ms1:
+  base-url: http://ms1-usuarios:8080

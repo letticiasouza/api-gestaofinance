@@ -3,3 +3,6 @@
 .idea/vcs.xml
 *.iml
 .env
+docker-compose.override.yml
+ms2-transacoes/Dockerfile.local
+ms2-transacoes/docker-local/zscaler.cer
