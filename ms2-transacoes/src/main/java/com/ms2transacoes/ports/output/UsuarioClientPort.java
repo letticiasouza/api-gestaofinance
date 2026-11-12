@@ -1,11 +1,12 @@
 package com.ms2transacoes.ports.output;
 
-import com.ms2transacoes.dto.UsuarioAuthResponse;
+import com.ms2transacoes.dto.LoginRequest;
+import com.ms2transacoes.dto.LoginResponse;
 
 public interface UsuarioClientPort {
 
-    UsuarioAuthResponse buscarPorEmail(
-            String email
+    LoginResponse autenticar(
+            LoginRequest request
     );
 
 }

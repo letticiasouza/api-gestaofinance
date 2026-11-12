@@ -1,10 +1,10 @@
 package com.ms2transacoes.adapters.output.client;
 
-import com.ms2transacoes.dto.UsuarioAuthResponse;
+import com.ms2transacoes.dto.LoginRequest;
+import com.ms2transacoes.dto.LoginResponse;
 import com.ms2transacoes.ports.output.UsuarioClientPort;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -12,35 +12,35 @@ import org.springframework.web.client.RestTemplate;
 public class UsuarioClientAdapter
         implements UsuarioClientPort {
 
-    private final RestTemplate restTemplate =
-            new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Value("${ms1.base-url}")
     private String ms1BaseUrl;
 
+    public UsuarioClientAdapter() {
+
+        SimpleClientHttpRequestFactory factory =
+                new SimpleClientHttpRequestFactory();
+
+        factory.setConnectTimeout(3000);
+        factory.setReadTimeout(3000);
+
+        this.restTemplate =
+                new RestTemplate(factory);
+    }
+
     @Override
-    public UsuarioAuthResponse buscarPorEmail(
-            String email) {
+    public LoginResponse autenticar(
+            LoginRequest request) {
 
         String url =
                 ms1BaseUrl
-                        + "/users/auth/"
-                        + email;
+                        + "/users/login";
 
-        System.out.println(
-                "BUSCANDO USUARIO NO MS1: " + email
-        );
-
-        System.out.println(
-                "URL: " + url
-        );
-
-        return restTemplate.exchange(
+        return restTemplate.postForObject(
                 url,
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<UsuarioAuthResponse>() {
-                }
-        ).getBody();
+                request,
+                LoginResponse.class
+        );
     }
 }

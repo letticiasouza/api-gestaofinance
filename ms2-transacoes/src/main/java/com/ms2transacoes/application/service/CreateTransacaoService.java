@@ -16,12 +16,19 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 public class CreateTransacaoService
         implements CreateTransacaoUseCase {
+
+    private static final ZoneId
+            ZONA_SAO_PAULO =
+            ZoneId.of(
+                    "America/Sao_Paulo"
+            );
 
     private final TransacaoRepositoryPort transacaoRepositoryPort;
 
@@ -33,8 +40,7 @@ public class CreateTransacaoService
     public CreateTransacaoService(
             TransacaoRepositoryPort transacaoRepositoryPort,
             SaldoLimiteClientPort saldoLimiteClientPort,
-            UsuarioAutenticadoProvider
-                    usuarioAutenticadoProvider) {
+            UsuarioAutenticadoProvider usuarioAutenticadoProvider) {
 
         this.transacaoRepositoryPort =
                 transacaoRepositoryPort;
@@ -51,8 +57,7 @@ public class CreateTransacaoService
             CreateTransacaoRequest request) {
 
         UUID usuarioId =
-                usuarioAutenticadoProvider
-                        .getId();
+                usuarioAutenticadoProvider.getId();
 
         ContaMockApiResponse conta =
                 saldoLimiteClientPort
@@ -65,6 +70,37 @@ public class CreateTransacaoService
             throw new ContaNaoEncontradaException();
         }
 
+        ContaMockApiResponse contaDestino = null;
+
+        if (request.getTipo()
+                == TipoTransacao.TRANSFERENCIA) {
+
+            if (request.getUsuarioDestinoId() == null) {
+
+                return salvarRejeitada(
+                        request,
+                        usuarioId,
+                        "Usuário destino é obrigatório"
+                );
+            }
+
+            contaDestino =
+                    saldoLimiteClientPort
+                            .buscarContaPorUsuario(
+                                    request.getUsuarioDestinoId()
+                                            .toString()
+                            );
+
+            if (contaDestino == null) {
+
+                return salvarRejeitada(
+                        request,
+                        usuarioId,
+                        "Usuário destino não encontrado"
+                );
+            }
+        }
+
         StatusTransacao status =
                 StatusTransacao.APROVADA;
 
@@ -73,21 +109,17 @@ public class CreateTransacaoService
         if (request.getValor()
                 .compareTo(conta.getSaldo()) > 0) {
 
-            status =
-                    StatusTransacao.REJEITADA;
+            status = StatusTransacao.REJEITADA;
 
             motivoRejeicao =
                     "Saldo insuficiente";
 
-        } else if (
+        } else if (request.getValor()
+                .compareTo(
+                        conta.getLimitePorTransacao()
+                ) > 0) {
 
-                request.getValor()
-                        .compareTo(
-                                conta.getLimitePorTransacao()
-                        ) > 0) {
-
-            status =
-                    StatusTransacao.REJEITADA;
+            status = StatusTransacao.REJEITADA;
 
             motivoRejeicao =
                     "Limite por transação excedido";
@@ -101,18 +133,26 @@ public class CreateTransacaoService
                             );
 
             LocalDate hoje =
-                    LocalDate.now();
+                    LocalDate.now(
+                            ZONA_SAO_PAULO
+                    );
 
             BigDecimal totalDoDia =
                     transacoesDoUsuario.stream()
-                            .filter(transacao ->
-                                    transacao.getStatus()
-                                            == StatusTransacao.APROVADA)
-                            .filter(transacao ->
-                                    transacao.getDataHora()
-                                            .toLocalDate()
-                                            .equals(hoje))
-                            .map(Transacao::getValor)
+                            .filter(
+                                    transacao ->
+                                            transacao.getStatus()
+                                                    == StatusTransacao.APROVADA
+                            )
+                            .filter(
+                                    transacao ->
+                                            transacao.getDataHora()
+                                                    .toLocalDate()
+                                                    .equals(hoje)
+                            )
+                            .map(
+                                    Transacao::getValor
+                            )
                             .reduce(
                                     BigDecimal.ZERO,
                                     BigDecimal::add
@@ -135,24 +175,18 @@ public class CreateTransacaoService
             }
         }
 
-        Transacao transacao = new Transacao(
-                UUID.randomUUID(),
-                request.getTipo(),
-                status,
-                request.getValor(),
-                LocalDateTime.now(),
-                request.getDescricao(),
-                request.getCategoria(),
-                usuarioId,
-                request.getUsuarioDestinoId(),
-                motivoRejeicao
-        );
+        if (status == StatusTransacao.REJEITADA) {
 
-        Transacao transacaoSalva =
-                transacaoRepositoryPort
-                        .salvar(transacao);
+            return salvarRejeitada(
+                    request,
+                    usuarioId,
+                    motivoRejeicao
+            );
+        }
 
-        if (status == StatusTransacao.APROVADA) {
+        // Atualiza saldo ANTES de salvar a transação
+
+        try {
 
             if (request.getTipo()
                     == TipoTransacao.DEPOSITO) {
@@ -184,28 +218,18 @@ public class CreateTransacaoService
                                 novoSaldoOrigem
                         );
 
-                ContaMockApiResponse contaDestino =
-                        saldoLimiteClientPort
-                                .buscarContaPorUsuario(
-                                        request.getUsuarioDestinoId()
-                                                .toString()
+                BigDecimal novoSaldoDestino =
+                        contaDestino.getSaldo()
+                                .add(
+                                        request.getValor()
                                 );
 
-                if (contaDestino != null) {
-
-                    BigDecimal novoSaldoDestino =
-                            contaDestino.getSaldo()
-                                    .add(
-                                            request.getValor()
-                                    );
-
-                    saldoLimiteClientPort
-                            .atualizarSaldo(
-                                    request.getUsuarioDestinoId()
-                                            .toString(),
-                                    novoSaldoDestino
-                            );
-                }
+                saldoLimiteClientPort
+                        .atualizarSaldo(
+                                request.getUsuarioDestinoId()
+                                        .toString(),
+                                novoSaldoDestino
+                        );
 
             } else {
 
@@ -221,7 +245,32 @@ public class CreateTransacaoService
                                 novoSaldo
                         );
             }
+
+        } catch (Exception e) {
+
+            return salvarRejeitada(
+                    request,
+                    usuarioId,
+                    "Serviço de saldo indisponível"
+            );
         }
+
+        Transacao transacao = new Transacao(
+                UUID.randomUUID(),
+                request.getTipo(),
+                StatusTransacao.APROVADA,
+                request.getValor(),
+                LocalDateTime.now(),
+                request.getDescricao(),
+                request.getCategoria(),
+                usuarioId,
+                request.getUsuarioDestinoId(),
+                null
+        );
+
+        Transacao transacaoSalva =
+                transacaoRepositoryPort
+                        .salvar(transacao);
 
         return new TransacaoResponse(
                 transacaoSalva.getId(),
@@ -234,6 +283,43 @@ public class CreateTransacaoService
                 transacaoSalva.getUsuarioOrigemId(),
                 transacaoSalva.getUsuarioDestinoId(),
                 transacaoSalva.getMotivoRejeicao()
+        );
+    }
+
+    private TransacaoResponse salvarRejeitada(
+            CreateTransacaoRequest request,
+            UUID usuarioId,
+            String motivo) {
+
+        Transacao transacao =
+                new Transacao(
+                        UUID.randomUUID(),
+                        request.getTipo(),
+                        StatusTransacao.REJEITADA,
+                        request.getValor(),
+                        LocalDateTime.now(),
+                        request.getDescricao(),
+                        request.getCategoria(),
+                        usuarioId,
+                        request.getUsuarioDestinoId(),
+                        motivo
+                );
+
+        Transacao salva =
+                transacaoRepositoryPort
+                        .salvar(transacao);
+
+        return new TransacaoResponse(
+                salva.getId(),
+                salva.getTipo(),
+                salva.getStatus(),
+                salva.getValor(),
+                salva.getDataHora(),
+                salva.getDescricao(),
+                salva.getCategoria(),
+                salva.getUsuarioOrigemId(),
+                salva.getUsuarioDestinoId(),
+                salva.getMotivoRejeicao()
         );
     }
 }

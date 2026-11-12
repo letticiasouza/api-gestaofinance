@@ -39,8 +39,7 @@ public class FindUsuarioAuthService
         return new UsuarioAuthResponse(
                 usuario.getId(),
                 usuario.getNome(),
-                usuario.getEmail(),
-                usuario.getSenha()
+                usuario.getEmail()
         );
     }
 }

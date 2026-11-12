@@ -5,7 +5,10 @@ import com.ms2transacoes.dto.ContaMockApiResponse;
 import com.ms2transacoes.ports.output.SaldoLimiteClientPort;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
@@ -22,7 +25,14 @@ public class SaldoLimiteMockApiClient
             @Value("${mockapi.base-url}")
             String baseUrl) {
 
+        SimpleClientHttpRequestFactory factory =
+                new SimpleClientHttpRequestFactory();
+
+        factory.setConnectTimeout(3000);
+        factory.setReadTimeout(3000);
+
         this.restClient = RestClient.builder()
+                .requestFactory(factory)
                 .baseUrl(baseUrl)
                 .build();
     }
@@ -43,13 +53,24 @@ public class SaldoLimiteMockApiClient
                                     )
                                     .build())
                             .retrieve()
-                            .body(new ParameterizedTypeReference<>() {});
+                            .body(new ParameterizedTypeReference<>() {
+                            });
 
             if (contas == null || contas.isEmpty()) {
                 return null;
             }
 
             return contas.getFirst();
+
+        } catch (HttpClientErrorException e) {
+
+            if (e.getStatusCode()
+                    == HttpStatus.NOT_FOUND) {
+
+                return null;
+            }
+
+            throw new ServicoSaldoIndisponivelException();
 
         } catch (RestClientException e) {
 
@@ -65,13 +86,17 @@ public class SaldoLimiteMockApiClient
         try {
 
             ContaMockApiResponse conta =
-                    buscarContaPorUsuario(usuarioId);
+                    buscarContaPorUsuario(
+                            usuarioId
+                    );
 
             if (conta == null) {
                 return;
             }
 
-            conta.setSaldo(novoSaldo);
+            conta.setSaldo(
+                    novoSaldo
+            );
 
             restClient.put()
                     .uri(

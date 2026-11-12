@@ -77,9 +77,7 @@ public class UsuarioController {
         return createUsuarioUseCase.criar(request);
     }
 
-    @Operation(
-            summary = "Autentica um usuário"
-    )
+    @Hidden
     @PostMapping("/login")
     public LoginResponse login(
             @Valid @RequestBody LoginRequest request) {

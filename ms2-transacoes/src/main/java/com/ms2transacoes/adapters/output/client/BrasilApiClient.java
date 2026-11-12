@@ -2,6 +2,7 @@ package com.ms2transacoes.adapters.output.client;
 
 import com.ms2transacoes.ports.output.CambioClientPort;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -20,7 +21,14 @@ public class BrasilApiClient
             @Value("${brasilapi.base-url}")
             String baseUrl) {
 
+        SimpleClientHttpRequestFactory factory =
+                new SimpleClientHttpRequestFactory();
+
+        factory.setConnectTimeout(3000);
+        factory.setReadTimeout(3000);
+
         this.restClient = RestClient.builder()
+                .requestFactory(factory)
                 .baseUrl(baseUrl)
                 .build();
     }
@@ -43,7 +51,8 @@ public class BrasilApiClient
         try {
 
             LocalDate dataConsulta =
-                    LocalDate.now().minusDays(1);
+                    LocalDate.now()
+                            .minusDays(1);
 
             Map<?, ?> response =
                     restClient.get()
@@ -54,11 +63,6 @@ public class BrasilApiClient
                             )
                             .retrieve()
                             .body(Map.class);
-
-            System.out.println(
-                    "BrasilAPI " + moeda + ": "
-                            + response
-            );
 
             if (response == null) {
 
@@ -75,11 +79,6 @@ public class BrasilApiClient
             if (cotacoes == null
                     || cotacoes.isEmpty()) {
 
-                System.out.println(
-                        "BrasilAPI " + moeda
-                                + " sem cotacoes"
-                );
-
                 return new Cotacao(
                         moeda,
                         null,
@@ -91,12 +90,6 @@ public class BrasilApiClient
                     (Map<?, ?>) cotacoes.get(
                             cotacoes.size() - 1
                     );
-
-            System.out.println(
-                    "Ultima cotacao "
-                            + moeda + ": "
-                            + ultimaCotacao
-            );
 
             BigDecimal taxa =
                     new BigDecimal(
@@ -116,12 +109,6 @@ public class BrasilApiClient
             );
 
         } catch (Exception ex) {
-
-            System.out.println(
-                    "ERRO BRASILAPI "
-                            + moeda + ": "
-                            + ex.getMessage()
-            );
 
             return new Cotacao(
                     moeda,

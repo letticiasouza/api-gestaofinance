@@ -175,4 +175,21 @@ public class GlobalExceptionHandler
                         "Erro interno da aplicação"
                 ));
     }
+
+    @ExceptionHandler(
+            IllegalArgumentException.class
+    )
+    public ResponseEntity<Map<String, Object>>
+    tratarIllegalArgument(
+            IllegalArgumentException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(
+                        Map.of(
+                                "status", 400,
+                                "mensagem", ex.getMessage()
+                        )
+                );
+    }
 }
